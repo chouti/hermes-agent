@@ -604,6 +604,7 @@ def memory_tool(
     target: str = "memory",
     content: str = None,
     old_text: str = None,
+    old_string: Optional[str] = None,  # alias for old_text (LLM sometimes confuses with patch tool)
     store: Optional[MemoryStore] = None,
 ) -> str:
     """
@@ -616,6 +617,10 @@ def memory_tool(
 
     if target not in {"memory", "user"}:
         return tool_error(f"Invalid target '{target}'. Use 'memory' or 'user'.", success=False)
+
+    # Compatibility: accept old_string as alias for old_text
+    if old_text is None and old_string is not None:
+        old_text = old_string
 
     if action == "add":
         if not content:
@@ -671,7 +676,7 @@ MEMORY_SCHEMA = {
         "- 'user': who the user is -- name, role, preferences, communication style, pet peeves\n"
         "- 'memory': your notes -- environment facts, project conventions, tool quirks, lessons learned\n\n"
         "ACTIONS: add (new entry), replace (update existing -- old_text identifies it), "
-        "remove (delete -- old_text identifies it).\n\n"
+        "remove (delete -- old_text identifies it). Pass either `old_text` or `old_string` for replace/remove.\n\n"
         "SKIP: trivial/obvious info, things easily re-discovered, raw data dumps, and temporary task state."
     ),
     "parameters": {
@@ -694,6 +699,10 @@ MEMORY_SCHEMA = {
             "old_text": {
                 "type": "string",
                 "description": "Short unique substring identifying the entry to replace or remove."
+            },
+            "old_string": {
+                "type": "string",
+                "description": "Alias for old_text. Use either old_text or old_string for replace/remove actions."
             },
         },
         "required": ["action", "target"],
